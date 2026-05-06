@@ -92,29 +92,70 @@ ALTER TABLE silver_restaurant ADD COLUMNS (
         (CASE WHEN payment_method = 'Card' THEN total_amount * 0.015 ELSE 0 END)
     )
 );
-📐 Complete Architecture
-Data Flow: Raw Files → Bronze (Delta) → Silver (Cleaned) → Gold (Star Schema) → Power BI
 
-Orchestration: Apache Airflow DAG (restaurant_medallion_pipeline) runs daily at 2 AM with retries and Slack alerts.
+📐 Complete Architecture
+```
+flowchart TD
+    subgraph SOURCES[Raw Data Sources]
+        CSV[7 CSV Files]
+        JSON[2 JSON Files]
+    end
+
+    subgraph DATABRICKS[Databricks Platform]
+        direction TB
+        BRONZE[🔵 Bronze Layer<br>11,110,000 rows<br>Delta Table]
+        SILVER[🟡 Silver Layer<br>Cleaning + Profit Model<br>2,497,678 rows]
+        GOLD[🟢 Gold Layer<br>Star Schema<br>Fact + 6 Dimensions]
+    end
+
+    subgraph AIRFLOW[Apache Airflow]
+        DAG[restaurant_medallion_pipeline<br>Daily @ 2 AM]
+    end
+
+    subgraph POWERBI[Power BI]
+        DASH[4-Page Dashboard<br>Executive • Profit • Customers • What-If]
+    end
+
+    CSV --> BRONZE
+    JSON --> BRONZE
+    BRONZE --> SILVER
+    SILVER --> GOLD
+    GOLD --> DASH
+
+    DAG -.-> BRONZE
+    DAG -.-> SILVER
+    DAG -.-> GOLD
+```
 
 ⚙️ Airflow DAG – Production Orchestration
-File: restaurant_pipeline_dag.py
-
-Workflow Tasks (in order):
-
-start_task
-
-ingest_bronze (load 9 files → Delta table)
-
-clean_silver (dedupe, filter, profit calc)
-
-build_gold (star schema: fact + dims)
-
-data_quality (validate row counts & nulls)
-
-notify_success (Slack webhook alert)
-
-end_task
+Located in: restaurant_pipeline_dag.py
+┌──────────────┐
+│   start_task │
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│ ingest_bronze│  ← Load 9 files → Delta table
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│ clean_silver │  ← Dedupe, filter, profit calc
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│  build_gold  │  ← Star schema (fact + dims)
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│ data_quality │  ← Validate row counts & nulls
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│notify_success│  ← Slack webhook alert
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│   end_task   │
+└──────────────┘
 
 Configuration	Value
 Schedule	0 2 * * * (daily 2 AM)
