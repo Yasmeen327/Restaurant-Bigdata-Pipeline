@@ -23,7 +23,7 @@
 
 This isn't just a dashboard. It's a **complete data platform** that:
 
-- Processes **11.1M+ raw records** from 9 disparate files (CSV + JSON)
+- Processes **11.1M+ raw records** from 9 disparate files (7 CSV + 2 JSON)
 - Runs a **Medallion Architecture** (Bronze → Silver → Gold) entirely on Databricks
 - Uses **PySpark** for distributed data transformation
 - Stores everything in **Delta Lake** for ACID compliance and time travel
@@ -45,20 +45,28 @@ This isn't just a dashboard. It's a **complete data platform** that:
 | **PySpark** | Distributed processing of 11M+ rows |
 | **Auto-loader** | Incremental ingestion from cloud storage |
 | **SQL Analytics** | Quick validation queries after each layer |
-| **Cluster management** | Optimized for community edition (single node) |
+| **Cluster management** | Optimized for community edition |
 
 ### Databricks Notebooks (3)
 
-```mermaid
-flowchart LR
-    N1[01_bronze_layer.ipynb] --> N2[02_silver_layer.ipynb]
-    N2 --> N3[03_gold_layer.ipynb]
-Notebook	Input	Operations	Output	Rows
-01_bronze_layer	7 CSV + 2 JSON	unionByName, schema unification, Delta write	bronze_restaurant	11,110,000
-02_silver_layer	bronze_restaurant	Deduplication (2M rows), price filter (51K rows), profit modeling (3 cost drivers), feature engineering (time_of_day, is_weekend, year, quarter)	silver_restaurant	2,497,678
-03_gold_layer	silver_restaurant	Create star schema: 1 fact table + 6 dimension tables, enforce relationships, validate referential integrity	gold_fact_orders + dim_date, dim_branch, dim_category, dim_customer, dim_payment, dim_time	2,497,678
-Databricks – Beautiful Features I Used
-sql
+**01_bronze_layer.ipynb**
+- Input: 7 CSV + 2 JSON files
+- Operations: `unionByName`, schema unification, Delta write
+- Output: `bronze_restaurant` (11,110,000 rows)
+
+**02_silver_layer.ipynb**
+- Input: `bronze_restaurant`
+- Operations: Deduplication (2M rows removed), price filter (51K rows removed), profit modeling (3 cost drivers), feature engineering (`time_of_day`, `is_weekend`, `year`, `quarter`)
+- Output: `silver_restaurant` (2,497,678 rows)
+
+**03_gold_layer.ipynb**
+- Input: `silver_restaurant`
+- Operations: Create star schema (1 fact table + 6 dimension tables), enforce relationships, validate referential integrity
+- Output: `gold_fact_orders` + `dim_date`, `dim_branch`, `dim_category`, `dim_customer`, `dim_payment`, `dim_time`
+
+### Beautiful Databricks SQL Examples
+
+```sql
 -- Bronze: Unified ingestion
 CREATE OR REPLACE TABLE bronze_restaurant
 USING DELTA
@@ -66,7 +74,7 @@ AS SELECT * FROM csv.`/path/restaurants`
 UNION ALL
 SELECT * FROM json.`/path/orders`;
 
--- Silver: Deduplication with window
+-- Silver: Deduplication with window function
 DELETE FROM silver_restaurant
 WHERE order_id IN (
     SELECT order_id FROM (
@@ -75,7 +83,7 @@ WHERE order_id IN (
     ) WHERE rn > 1
 );
 
--- Silver: Profit modeling
+-- Silver: Profit modeling (generated column)
 ALTER TABLE silver_restaurant ADD COLUMNS (
     profit DECIMAL(12,2) GENERATED ALWAYS AS (
         total_amount - 
@@ -84,97 +92,30 @@ ALTER TABLE silver_restaurant ADD COLUMNS (
         (CASE WHEN payment_method = 'Card' THEN total_amount * 0.015 ELSE 0 END)
     )
 );
-
--- Gold: Star schema with foreign keys
-CREATE TABLE gold_fact_orders AS
-SELECT 
-    o.order_id,
-    d.date_key,
-    b.branch_key,
-    c.category_key,
-    p.payment_key,
-    o.customer_id,
-    t.time_key,
-    o.total_amount,
-    o.profit
-FROM silver_restaurant o
-LEFT JOIN dim_date d ON o.order_date = d.date
-LEFT JOIN dim_branch b ON o.branch = b.branch_name
-LEFT JOIN dim_category c ON o.category = c.category_name
-LEFT JOIN dim_payment p ON o.payment_method = p.method;
 📐 Complete Architecture
+Data Flow: Raw Files → Bronze (Delta) → Silver (Cleaned) → Gold (Star Schema) → Power BI
 
-flowchart TD
-    subgraph SOURCES[Raw Data Sources]
-        CSV[7 CSV Files]
-        JSON[2 JSON Files]
-    end
-
-    subgraph DATABRICKS[Databricks Platform]
-        direction TB
-        BRONZE[🔵 Bronze Layer<br>11,110,000 rows<br>Delta Table]
-        SILVER[🟡 Silver Layer<br>Cleaning + Profit Model<br>2,497,678 rows]
-        GOLD[🟢 Gold Layer<br>Star Schema<br>Fact + 6 Dimensions]
-    end
-
-    subgraph AIRFLOW[Apache Airflow]
-        DAG[restaurant_medallion_pipeline<br>Daily @ 2 AM]
-    end
-
-    subgraph POWERBI[Power BI]
-        DASH[4-Page Dashboard<br>Executive • Profit • Customers • What-If]
-    end
-
-    CSV --> BRONZE
-    JSON --> BRONZE
-    BRONZE --> SILVER
-    SILVER --> GOLD
-    GOLD --> DASH
-
-    DAG -.-> BRONZE
-    DAG -.-> SILVER
-    DAG -.-> GOLD
-
-
-
-
-
-
-
-
-
+Orchestration: Apache Airflow DAG (restaurant_medallion_pipeline) runs daily at 2 AM with retries and Slack alerts.
 
 ⚙️ Airflow DAG – Production Orchestration
-Located in: restaurant_pipeline_dag.py
+File: restaurant_pipeline_dag.py
 
-text
-┌──────────────┐
-│   start_task │
-└──────┬───────┘
-       ▼
-┌──────────────┐
-│ ingest_bronze│  ← Load 9 files → Delta table
-└──────┬───────┘
-       ▼
-┌──────────────┐
-│ clean_silver │  ← Dedupe, filter, profit calc
-└──────┬───────┘
-       ▼
-┌──────────────┐
-│  build_gold  │  ← Star schema (fact + dims)
-└──────┬───────┘
-       ▼
-┌──────────────┐
-│ data_quality │  ← Validate row counts & nulls
-└──────┬───────┘
-       ▼
-┌──────────────┐
-│notify_success│  ← Slack webhook alert
-└──────┬───────┘
-       ▼
-┌──────────────┐
-│   end_task   │
-└──────────────┘
+Workflow Tasks (in order):
+
+start_task
+
+ingest_bronze (load 9 files → Delta table)
+
+clean_silver (dedupe, filter, profit calc)
+
+build_gold (star schema: fact + dims)
+
+data_quality (validate row counts & nulls)
+
+notify_success (Slack webhook alert)
+
+end_task
+
 Configuration	Value
 Schedule	0 2 * * * (daily 2 AM)
 Retries	3 attempts (5-minute delay)
@@ -192,6 +133,8 @@ Result: Average profit margin = 65.34% (consistent with Egyptian QSR benchmarks)
 
 📊 Power BI Dashboard – 4 Pages
 Page 1: Executive Overview
+Purpose: At-a-glance business health
+
 KPI cards: Revenue (654.5M), Profit (444M), Margin (65.34%), Orders (2.5M), Rating (3.70)
 
 Revenue trend by year (2020–2025)
@@ -205,27 +148,67 @@ Payment method distribution
 Data quality snapshot – 8.6M rows removed, 99.5% trust score
 
 Page 2: Profit Analysis
-Branch performance table with margin grading
+Purpose: Branch-level profitability and actionable insights
 
-Actionable insights: Assiut improvement, grill margin opportunity, card→wallet savings
+Branch performance table with margin grading (Strong / Average / At Risk)
 
-Conditional formatting (green/gold/red based on margin)
+Actionable insights:
 
+"Assiut margin is 64% — 6pts below Cairo. High delivery mix (42%) is eroding profit. Push weekend dine-in promotions."
+
+"Grills deliver 68% margin. Increasing menu share by 5% could add ~7M EGP to annual profit."
+
+"Card payments cost 1.5%. Shifting card users to Wallet saves ~1.4M EGP/year."
+
+Branch Data Summary:
+
+Branch	Revenue	Net Profit	Margin	Status
+القاهرة	229M	155M	70%	Strong
+الجيزة	131M	89M	69%	Strong
+الإسكندرية	131M	89M	68%	Average
+المنصورة	65M	44M	67%	Average
+طنطا	65M	44M	66%	Average
+أسيوط	33M	22M	64%	At Risk
 Page 3: Customer Insights
-200K total customers, 175K active, 12.6% churn
+Purpose: Understand customer behavior, lifetime value, and retention drivers
 
-CLV (Customer Lifetime Value) by branch (bar chart)
+KPI cards: Total Customers (200K), Active Customers (175K), Churn Rate (12.6%), Avg Orders per Customer (12.49)
 
-Customer segmentation (New / Regular / Loyal)
+CLV (Customer Lifetime Value) by branch (horizontal bar chart): Cairo (1,159 EGP), Assiut (351 EGP)
 
-Business recommendations for low-CLV branches
+Customer segmentation (Donut chart): New (0.4%), Regular (1.5%), Loyal (98.1%)
 
+Business recommendations:
+
+"Cairo customers have 3.2x higher lifetime value than Assiut. Investigate frequency vs order value."
+
+"98.1% loyal customers – launch VIP referral program."
+
+"12.6% churn rate – target at-risk branches with win-back offers."
+
+Customer Measures (DAX):
+
+dax
+Total Customers = DISTINCTCOUNT(Fact_Orders[customer_id])
+Active Customers = CALCULATE(DISTINCTCOUNT(Fact_Orders[customer_id]), Fact_Orders[order_date] >= DATE(2025,1,1))
+Churn Rate = DIVIDE([Total Customers] - [Active Customers], [Total Customers], 0)
+Avg Orders per Customer = DIVIDE(COUNTROWS(Fact_Orders), [Total Customers], 0)
+CLV = DIVIDE([Total Revenue], [Total Customers], 0)
 Page 4: What-If Simulator
-4 interactive parameters (delivery %, digital shift, discount reduction, price increase)
+Purpose: Interactive scenario analysis for strategic decisions
 
-Live updates to revenue impact (+49M), profit impact (+31.9M), new margin (66.0%)
+Parameter	Default	Business Impact
+Delivery Order % Increase	+13%	Each 1% adds ~417 orders/month. Net effect slightly negative on margin.
+Cash → Digital Payment Shift	+15%	Shifting card to wallet saves 1.5% per transaction.
+Average Discount Reduction	-2%	Current discount 3.6%. Reducing improves revenue per order.
+Menu Price Increase	+5%	Every 1% adds ~6.5M revenue and ~4.2M profit annually.
+Combined Impact:
 
-Same-page simulation – no need to switch tabs
+Revenue Impact: +49M EGP annually
+
+Profit Impact: +31.9M EGP annually
+
+New Profit Margin: 66.0% (vs current 65.3%)
 
 📈 Data Quality Results
 Stage	Records
@@ -282,7 +265,7 @@ Import 3 notebooks into Databricks workspace
 
 Mount source files (CSV + JSON) to DBFS
 
-Run 01_bronze_layer → 02_silver_layer → 03_gold_layer
+Run 01_bronze_layer → 02_silver_layer → 03_gold_layer sequentially
 
 Verify row counts at each stage
 
@@ -337,6 +320,11 @@ Focus: Data Engineering, Analytics Systems, BI Architecture
 
 📜 License
 MIT License – free for educational and professional use with attribution.
+
+
+
+
+
 
 
 
