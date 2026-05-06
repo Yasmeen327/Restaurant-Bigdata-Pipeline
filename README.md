@@ -93,28 +93,21 @@ ALTER TABLE silver_restaurant ADD COLUMNS (
     )
 );
 
-📐 Complete Architecture
-```
+
+## 📐 Complete Architecture
+
+```mermaid
 flowchart TD
-    subgraph SOURCES[Raw Data Sources]
-        CSV[7 CSV Files]
-        JSON[2 JSON Files]
-    end
-
-    subgraph DATABRICKS[Databricks Platform]
-        direction TB
-        BRONZE[🔵 Bronze Layer<br>11,110,000 rows<br>Delta Table]
-        SILVER[🟡 Silver Layer<br>Cleaning + Profit Model<br>2,497,678 rows]
-        GOLD[🟢 Gold Layer<br>Star Schema<br>Fact + 6 Dimensions]
-    end
-
-    subgraph AIRFLOW[Apache Airflow]
-        DAG[restaurant_medallion_pipeline<br>Daily @ 2 AM]
-    end
-
-    subgraph POWERBI[Power BI]
-        DASH[4-Page Dashboard<br>Executive • Profit • Customers • What-If]
-    end
+    CSV[7 CSV Files]
+    JSON[2 JSON Files]
+    
+    BRONZE[Bronze Layer<br/>11,110,000 rows<br/>Delta Table]
+    SILVER[Silver Layer<br/>Cleaning + Profit Model<br/>2,497,678 rows]
+    GOLD[Gold Layer<br/>Star Schema<br/>Fact + 6 Dimensions]
+    
+    DAG[Airflow DAG<br/>Daily at 2 AM]
+    
+    DASH[Power BI Dashboard<br/>4 Pages: Overview, Profit, Customers, What-If]
 
     CSV --> BRONZE
     JSON --> BRONZE
