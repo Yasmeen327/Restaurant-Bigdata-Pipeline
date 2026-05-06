@@ -29,15 +29,16 @@ It supports executive reporting, profitability tracking, customer segmentation, 
 
 ```mermaid
 flowchart TD
-    A[Raw Data Sources] --> B[Ingestion Layer]
-    B --> C[Bronze Layer]
-    C --> D[Silver Layer]
-    D --> E[Gold Layer]
+    A[Raw Data Sources - CSV + JSON] --> B[Ingestion Layer - Databricks / Fivetran]
+    B --> C[Bronze Layer - Raw Delta Tables]
+    C --> D[Silver Layer - Cleaned + Enriched Data]
+    D --> E[Gold Layer - Star Schema Warehouse]
     E --> F[Power BI Semantic Layer]
 
     G[Airflow Orchestration] --> C
     G --> D
     G --> E
+```
 
 🧱 Medallion Architecture
 🔵 Bronze Layer — Raw Ingestion
