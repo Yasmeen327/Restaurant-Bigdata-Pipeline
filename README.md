@@ -21,6 +21,7 @@ flowchart TD
     F[Airflow DAG] -.-> B
     F -.-> C
     F -.-> D
+```
 
 **Layer Details**
 
