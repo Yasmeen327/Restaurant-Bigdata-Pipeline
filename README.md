@@ -13,14 +13,21 @@ This project demonstrates real-world data engineering skills including large-sca
 ## 🏗 Architecture
 
 ```mermaid
-flowchart TD
-    A[7 CSV + 2 JSON files] --> B[Bronze Layer]
-    B --> C[Silver Layer]
-    C --> D[Gold Layer]
-    D --> E[Power BI Dashboard]
-    F[Airflow DAG] -.-> B
+graph TD
+    A[7 CSV + 2 JSON Files<br/>11.1M Raw Records] --> B[Bronze Layer<br/>Delta Lake - 11.1M rows]
+    B --> C[Silver Layer<br/>Clean & Engineered - 2.49M rows]
+    C --> D[Gold Layer<br/>Star Schema - 1 Fact + 6 Dims]
+    D --> E[Power BI Dashboard<br/>4 Pages - Executive + What-If]
+    F[Apache Airflow DAG<br/>Daily Schedule] -.-> B
     F -.-> C
     F -.-> D
+
+    style A fill:#CD7F32,color:#fff
+    style B fill:#CD7F32,color:#fff
+    style C fill:#A8A9AD,color:#fff
+    style D fill:#C8922A,color:#fff
+    style E fill:#1E6B5A,color:#fff
+    style F fill:#2D6A8A,color:#fff
 ```
 
 **Layer Details**
