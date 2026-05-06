@@ -1,357 +1,240 @@
 ```markdown
-# Egyptian Restaurant Data Platform  
-## End-to-End Medallion Architecture on Databricks (11.1M+ Records | 2020–2025)
-
-> A production-grade analytics system simulating a multi-branch restaurant chain in Egypt.  
-> Built entirely on **Databricks** (Spark + Delta Lake), orchestrated with **Apache Airflow**, and delivered through **Power BI**.
-
-This is my Big Data project for the ITI Power BI Development Track – built to demonstrate enterprise-ready data engineering skills.
+# 🍽 Egyptian Restaurant Big Data Pipeline
+### End-to-end Big Data Engineering Project | Databricks · PySpark · Airflow · Delta Lake · Power BI
 
 ---
 
-## Dashboard Previews
+## 🎯 Project Overview
 
-| Page | Preview |
-|------|---------|
-| Executive Overview | `assets/overview.png` |
-| Profit Analysis | `assets/profit-analysis.png` |
-| Customer Insights | `assets/customer-insights.png` |
-| What-If Simulator | `assets/what-if-simulator.png` |
+A production-grade **Big Data pipeline** that ingests, cleans, transforms, and serves **11 million+ records** from a multi-branch Egyptian restaurant chain. Built using the **Medallion Architecture** on **Databricks**, orchestrated with **Apache Airflow**, and visualized in **Power BI**.
+
+This project demonstrates real-world data engineering skills including large-scale data processing, pipeline orchestration, data quality management, star schema modeling, and business intelligence delivery.
 
 ---
 
-## Why This Project Matters
-
-This isn't just a dashboard. It's a complete data platform that:
-
-- Processes 11.1 million raw records from 9 disparate files (7 CSV + 2 JSON)
-- Runs a Medallion Architecture (Bronze → Silver → Gold) entirely on Databricks
-- Uses PySpark for distributed data transformation
-- Stores everything in Delta Lake for ACID compliance and time travel
-- Orchestrates daily runs with Apache Airflow
-- Delivers 4 interactive Power BI pages with profit modeling, what-if simulation, and customer retention analysis
-
----
-
-## Databricks – The Heart of the Pipeline
-
-### Why Databricks?
-
-| Feature | How I Used It |
-|---------|----------------|
-| Unified workspace | All notebooks (Bronze, Silver, Gold) in one place |
-| Delta Lake | ACID transactions, schema enforcement, time travel |
-| PySpark | Distributed processing of 11M rows |
-| Auto-loader | Incremental ingestion from cloud storage |
-| SQL Analytics | Quick validation queries after each layer |
-
-### Databricks Notebooks
-
-**01_bronze_layer.ipynb**
-- Input: 7 CSV + 2 JSON files
-- Operations: `unionByName`, schema unification, Delta write
-- Output: `bronze_restaurant` (11,110,000 rows)
-
-**02_silver_layer.ipynb**
-- Input: `bronze_restaurant`
-- Operations: Deduplication (2M rows removed), price filter (51K rows removed), profit modeling (3 cost drivers), feature engineering (`time_of_day`, `is_weekend`, `year`, `quarter`)
-- Output: `silver_restaurant` (2,497,678 rows)
-
-**03_gold_layer.ipynb**
-- Input: `silver_restaurant`
-- Operations: Create star schema (1 fact table + 6 dimension tables), enforce relationships
-- Output: `gold_fact_orders` + 6 dimension tables
-
-### Databricks SQL Examples
-
-```sql
--- Bronze: Unified ingestion
-CREATE OR REPLACE TABLE bronze_restaurant
-USING DELTA
-AS SELECT * FROM csv.`/path/restaurants`
-UNION ALL
-SELECT * FROM json.`/path/orders`;
-
--- Silver: Deduplication using ROW_NUMBER
-CREATE OR REPLACE TABLE silver_restaurant AS
-SELECT * FROM (
-    SELECT *,
-        ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY order_date) as row_num
-    FROM bronze_restaurant
-) WHERE row_num = 1;
-
--- Silver: Add profit column
-CREATE OR REPLACE TABLE silver_restaurant_with_profit AS
-SELECT *,
-    total_amount - 
-    (total_amount * 0.30) - 
-    CASE WHEN order_type = 'Delivery' THEN 15 ELSE 0 END - 
-    CASE WHEN payment_method = 'Card' THEN total_amount * 0.015 ELSE 0 END AS profit
-FROM silver_restaurant;
-```
-
----
-
-Complete Architecture
-
-Below is the end-to-end data flow from raw sources to the final Power BI dashboard, including orchestration via Apache Airflow.
+## 🏗 Architecture
 
 ```mermaid
 flowchart TD
-    CSV[7 CSV Files]
-    JSON[2 JSON Files]
+    A[7 CSV Files + 2 JSON Files<br/>11.1M raw records] --> B[BRONZE LAYER<br/>Delta Lake<br/>Unified raw ingestion]
+    B --> C[SILVER LAYER<br/>Delta Lake<br/>Clean, dedupe, feature engineering]
+    C --> D[GOLD LAYER<br/>Star Schema<br/>Fact + 6 Dimensions]
+    D --> E[Power BI Dashboard<br/>4 pages]
     
-    BRONZE[Bronze Layer<br/>11,110,000 rows<br/>Delta Table]
-    SILVER[Silver Layer<br/>Cleaning + Profit Model<br/>2,497,678 rows]
-    GOLD[Gold Layer<br/>Star Schema<br/>Fact + 6 Dimensions]
-    
-    DAG[Airflow DAG<br/>Daily at 2 AM]
-    
-    DASH[Power BI Dashboard<br/>4 Pages]
-
-    CSV --> BRONZE
-    JSON --> BRONZE
-    BRONZE --> SILVER
-    SILVER --> GOLD
-    GOLD --> DASH
-
-    DAG -.-> BRONZE
-    DAG -.-> SILVER
-    DAG -.-> GOLD
+    F[Apache Airflow DAG<br/>Daily schedule] -.-> B
+    F -.-> C
+    F -.-> D
 ```
 
----
+Data Flow:
 
-Airflow DAG – Production Orchestration
-
-File: restaurant_pipeline_dag.py
-
-Workflow Tasks (in order):
-
-1. start_task
-2. ingest_bronze – load 9 files to Delta table
-3. clean_silver – dedupe, filter, profit calc
-4. build_gold – star schema (fact + dims)
-5. data_quality – validate row counts and nulls
-6. notify_success – Slack webhook alert
-7. end_task
-
-Configuration Value
-Schedule 0 2 * * * (daily 2 AM)
-Retries 3 attempts with 5-minute delay
-Timeout 60 minutes
-Alerting Slack webhook (success/failure)
+· Bronze: unionByName across 9 files → 11,110,000 rows
+· Silver: Removed 2M duplicates, 51K bad prices → 2,497,678 clean rows
+· Gold: Star schema (fact_orders + dim_date, branch, category, payment, customer, time)
 
 ---
 
-Profit Modeling (Silver Layer)
-
-Since actual cost data wasn't available, I built a deterministic financial model directly in PySpark:
-
-Cost Driver Assumption Annual Impact
-Food cost 30 percent of revenue ~196M EGP
-Delivery cost 15 EGP per delivery order ~11M EGP
-Card processing fee 1.5 percent of card transactions ~2.95M EGP
-
-Result: Average profit margin = 65.34 percent
-
----
-
-Power BI Dashboard – 4 Pages
-
-Page 1: Executive Overview
-
-· KPI cards: Revenue (654.5M), Profit (444M), Margin (65.34%), Orders (2.5M), Rating (3.70)
-· Revenue trend by year (2020 to 2025)
-· Revenue by branch (Cairo highest)
-· Top 5 items by revenue
-· Payment method distribution
-· Data quality snapshot showing 8.6M rows removed
-
----
-
-Page 2: Profit Analysis
-
-Branch Performance Table:
-
-Branch Revenue Net Profit Margin Status
-Cairo 229M 155M 70% Strong
-Giza 131M 89M 69% Strong
-Alexandria 131M 89M 68% Average
-Mansoura 65M 44M 67% Average
-Tanta 65M 44M 66% Average
-Assiut 33M 22M 64% At Risk
-
-Actionable Insights:
-
-· Assiut margin is 64 percent, 6 points below Cairo. High delivery mix at 42 percent is eroding profit. Push weekend dine-in promotions.
-· Grills deliver 68 percent margin. Increasing menu share by 5 percent could add about 7M EGP to annual profit.
-· Card payments cost 1.5 percent. Shifting card users to Wallet saves about 1.4M EGP per year.
-
----
-
-Page 3: Customer Insights
-
-Key Metrics:
-
-· Total Customers: 200,000
-· Active Customers: 175,000
-· Churn Rate: 12.6 percent
-· Avg Orders per Customer: 12.49
-
-CLV by Branch (Customer Lifetime Value):
-
-· Cairo: 1,159 EGP
-· Alexandria: 714 EGP
-· Giza: 714 EGP
-· Tanta: 458 EGP
-· Mansoura: 458 EGP
-· Assiut: 351 EGP
-
-Customer Segmentation:
-
-· New customers (1 order): 0.4 percent
-· Regular customers (2 to 5 orders): 1.5 percent
-· Loyal customers (6+ orders): 98.1 percent
-
-Business Recommendations:
-
-· Cairo customers have 3.2 times higher lifetime value than Assiut. Investigate frequency versus order value.
-· 98 percent of customers are loyal. Launch a VIP referral program.
-· Churn rate at 12.6 percent. Target at-risk branches with win-back offers.
-
----
-
-Page 4: What-If Simulator
-
-Parameter Default Business Impact
-Delivery Order Percent Increase +13% Each 1% adds about 417 orders per month
-Cash to Digital Payment Shift +15% Saves 1.5 percent per transaction
-Average Discount Reduction -2% Current discount is 3.6 percent
-Menu Price Increase +5% Each 1% adds about 6.5M revenue
-
-Combined Impact:
-
-· Revenue Impact: +49M EGP annually
-· Profit Impact: +31.9M EGP annually
-· New Profit Margin: 66.0 percent (vs 65.3 percent)
-
----
-
-Data Quality Results
-
-Stage Records
-Raw ingestion (Bronze) 11,110,000
-After duplicate removal 9,110,000
-After price filter 9,058,558
-After joins (Gold) 2,497,678
-
-Quality Gates Enforced:
-
-· Duplicate detection using ROW_NUMBER window function
-· Price validation removing negative or zero values
-· Schema enforcement across all 9 sources
-· Referential integrity between fact and dimension tables
-
----
-
-Tech Stack
-
-Layer Technology
-Data Lake Delta Lake (Databricks)
-Processing Apache Spark (PySpark)
-Orchestration Apache Airflow
-BI and Analytics Power BI
-Languages Python, SQL, DAX
-Version Control GitHub
-
----
-
-Repository Structure
-
-```
-Egyptian-Restaurant-Platform/
-├── assets/
-│   ├── overview.png
-│   ├── profit-analysis.png
-│   ├── customer-insights.png
-│   └── what-if-simulator.png
-├── notebooks/
-│   ├── 01_bronze_layer.ipynb
-│   ├── 02_silver_layer.ipynb
-│   └── 03_gold_layer.ipynb
-├── airflow/
-│   └── restaurant_pipeline_dag.py
-├── powerbi/
-│   └── restaurant_dashboard.pbix
-├── README.md
-└── requirements.txt
-```
-
----
-
-How to Reproduce
-
-Databricks Setup
-
-1. Import 3 notebooks into Databricks workspace
-2. Mount source files (CSV and JSON) to DBFS
-3. Run bronze, then silver, then gold sequentially
-4. Export Gold tables as Parquet
-
-Airflow Deployment
-
-1. Copy DAG to Airflow dags folder
-2. Configure Slack webhook for alerts
-3. Start scheduler and trigger DAG
-
-Power BI
-
-1. Open .pbix file
-2. Connect to exported Gold tables
-3. Publish to Power BI Service
-
----
-
-Data Engineering Highlights
-
-Capability Implementation
-Scalability PySpark distributed processing for 11M rows
-Idempotency Delta Lake overwrite-safe operations
-Data Quality Deduplication, null handling, referential integrity
-Orchestration Airflow DAG with retries and Slack alerts
-Star Schema Fact table plus 6 dimensions
-Profit Modeling 3 cost drivers embedded in PySpark
-Simulation Layer Power BI what-if parameters
-
----
-
-Business KPIs
+📊 Data Quality Results
 
 Metric Value
+Raw Records Ingested 11,110,000
+Duplicate Order IDs Removed 2,000,000
+Invalid Price Records Removed 51,442
+Null Values Found 0
+Clean Unique Orders 2,497,678
+
+Key insight: The raw dataset contained duplicate records that inflated order counts by 4x. Proper deduplication reduced 11.1M records to 2.49M clean, trustworthy orders — a critical data engineering decision that ensures accurate reporting.
+
+---
+
+💰 Business Results
+
+KPI Value
 Total Revenue 654.5M EGP
-Total Profit 444.0M EGP
-Average Profit Margin 65.34 percent
-Average Order Value 262 EGP
-Average Rating 3.70 out of 5
-Total Clean Orders 2,497,678
-Date Range 2020 to 2025
-Branches 6
+Total Profit 443.97M EGP
+Avg Profit Margin 65.34%
+Avg Order Value 262 EGP
+Avg Rating 3.70 / 5
+Unique Customers 200,000
+Date Range Jan 2020 – Dec 2025
+Branches 6 Egyptian cities
 
 ---
 
-Author
+🔧 Tech Stack
 
-Yasmeen El Shamy
-ITI Power BI Development Track
-GitHub: Yasmeen327
+Technology Purpose
+Apache Spark / PySpark Large-scale data transformation (11M+ records)
+Databricks Unified analytics platform & notebook environment
+Delta Lake ACID-compliant storage with time travel
+Apache Airflow Pipeline orchestration & daily scheduling
+Power BI Business intelligence & executive dashboard
+Python DAG development, data engineering logic
+SQL Data validation and quality checks
 
 ---
 
-License
+🔄 Airflow DAG
 
-MIT License – free for educational and professional use with attribution.
+The DAG restaurant_medallion_pipeline runs on a daily schedule and orchestrates the full pipeline:
 
+```
+start
+  └─► ingest_bronze      (Unify 7 CSV + 2 JSON → Bronze Delta table)
+        └─► clean_silver  (Clean, dedupe, engineer features → Silver)
+              └─► build_gold  (Star schema → Gold layer)
+                    └─► data_quality_check  (Validate row counts, nulls, margins)
+                          └─► notify_success  (Log pipeline summary)
+                                └─► end
+```
+
+Quality checks in the DAG:
+
+· Row count validation (expected: ~2.49M)
+· Null value assertion across all columns
+· Duplicate check on order IDs
+· Profit margin sanity check (expected: 60–75%)
+
+---
+
+💡 Profit Model
+
+Since cost data was not available in the raw dataset, profit was modeled using industry-standard assumptions:
+
+Cost Driver Assumption Rationale
+Food Cost 30% of order revenue Industry standard F&B cost ratio
+Delivery Cost 15 EGP flat per delivery order Fixed logistics cost per order
+Card Processing Fee 1.5% of order value Standard merchant processing rate
+
+Formula:
+
+```
+Profit = Revenue − Food Cost − Delivery Cost − Payment Cost
+Profit Margin = (Profit / Revenue) × 100
 ```
 
 ---
+
+📈 Branch Performance
+
+Branch Revenue Net Profit Margin Status
+القاهرة 229M EGP 155M EGP 70% ✅ Strong
+الجيزة 131M EGP 89M EGP 69% ✅ Strong
+الإسكندرية 131M EGP 89M EGP 68% ✅ Strong
+المنصورة 65M EGP 44M EGP 67% ⚠️ Average
+طنطا 65M EGP 44M EGP 66% ⚠️ Average
+أسيوط 33M EGP 22M EGP 64% 🔴 At Risk
+
+---
+
+📊 Power BI Dashboard Pages
+
+Page 1 — Executive Overview
+
+KPI cards (Revenue, Profit, Orders, AOV, Rating), revenue trend by year, branch performance bar chart, payment method and order type distribution, top items by revenue.
+
+Page 2 — Profit Analysis
+
+Branch profit table with performance grades, profit by category, cost breakdown (food/delivery/payment), and 3 actionable business insights.
+
+Page 3 — Customer Insights
+
+Total vs active customers, churn rate, customer lifetime value (CLV) by branch, customer trend over time.
+
+Page 4 — What-If Simulator
+
+4 interactive parameters:
+
+· Delivery Order % Increase
+· Cash → Digital Payment Shift
+· Average Discount Reduction
+· Menu Price Increase
+
+Live impact cards showing Revenue Impact, Profit Impact, and New Profit Margin as parameters change.
+
+---
+
+📁 Repository Structure
+
+```
+Restaurant-Bigdata-Pipeline/
+│
+├── dags/
+│   └── restaurant_pipeline_dag.py    # Airflow DAG (full pipeline orchestration)
+│
+├── notebooks/
+│   ├── 01_bronze_ingestion.py        # Bronze layer: raw data unification
+│   ├── 02_silver_cleaning.py         # Silver layer: cleaning & feature engineering
+│   └── 03_gold_star_schema.py        # Gold layer: star schema construction
+│
+├── dashboard/
+│   └── restaurant_dashboard.pbix     # Power BI dashboard file
+│
+├── docs/
+│   └── architecture_diagram.png      # Pipeline architecture diagram
+│
+└── README.md
+```
+
+---
+
+🚀 How to Run
+
+Prerequisites
+
+· Databricks Community Edition account
+· Apache Airflow installed (Ubuntu/Linux recommended)
+· Power BI Desktop
+
+Steps
+
+1. Upload data to Databricks
+
+```
+Upload CSV and JSON files to Databricks FileStore
+Run: SHOW TABLES to verify tables are created
+```
+
+2. Run notebooks in order
+
+```
+01_bronze_ingestion.py  →  Creates bronze_orders
+02_silver_cleaning.py   →  Creates silver_orders
+03_gold_star_schema.py  →  Creates gold_fact_orders + 6 dimensions
+```
+
+3. Deploy Airflow DAG
+
+```bash
+cp dags/restaurant_pipeline_dag.py $AIRFLOW_HOME/dags/
+airflow dags trigger restaurant_medallion_pipeline
+```
+
+4. Connect Power BI
+
+```
+Export Gold tables as CSV from Databricks
+Load into Power BI Desktop
+Relationships already configured in star schema
+```
+
+---
+
+👩‍💻 Author
+
+Yasmeen El Shamy
+ITI Power BI Development Track — Big Data Engineering Project
+GitHub: @Yasmeen327
+
+---
+
+📌 Key Learnings
+
+· Medallion Architecture is essential for large-scale data quality management
+· Deduplication at scale requires careful key identification — order_id was the correct grain
+· Profit modeling with assumed costs is a valid analytical technique when cost data is unavailable — the key is transparency about assumptions
+· Pipeline orchestration with Airflow transforms a notebook exercise into a production system
+· Star schema design decisions directly impact Power BI performance and DAX complexity
+
+```
+``
