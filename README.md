@@ -14,19 +14,16 @@ This project demonstrates real-world data engineering skills including large-sca
 
 ## 🏗 Architecture
 
-```mermaid
 flowchart TD
-    A[7 CSV Files + 2 JSON Files<br/>11.1M raw records] --> B[BRONZE LAYER<br/>Delta Lake<br/>Unified raw ingestion]
-    B --> C[SILVER LAYER<br/>Delta Lake<br/>Clean, dedupe, feature engineering]
-    C --> D[GOLD LAYER<br/>Star Schema<br/>Fact + 6 Dimensions]
-    D --> E[Power BI Dashboard<br/>4 pages]
-    
-    F[Apache Airflow DAG<br/>Daily schedule] -.-> B
+    A[7 CSV + 2 JSON Files<br/>11.1M Raw Records] --> B[Bronze Layer<br/>Delta Lake<br/>Raw Ingestion]
+    B --> C[Silver Layer<br/>Data Cleaning & Transformation]
+    C --> D[Gold Layer<br/>Star Schema Model]
+    D --> E[Power BI Dashboard<br/>4 Pages]
+
+    F[Apache Airflow DAG<br/>Orchestration] -.-> B
     F -.-> C
     F -.-> D
 ```
-
----
 Data Flow:
 
 Layer	Operation	Row Count
