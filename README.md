@@ -12,10 +12,10 @@
 
 | Page | Preview |
 |------|---------|
-| Executive Overview | ![Overview](assets/overview.png) |
-| Profit Analysis | ![Profit Analysis](assets/profit-analysis.png) |
-| Customer Insights | ![Customer Insights](assets/customer-insights.png) |
-| What-If Simulator | ![What-If Simulator](assets/what-if-simulator.png) |
+| Executive Overview | ![overview](assets/overview.png) |
+| Profit Analysis | ![Profit-Analysis](assets/profit-analysis.png) |
+| Customer Insights | ![Customer-Insights](assets/customer-insights.png) |
+| What-If Simulator | ![What-If-Simulator](assets/what-if-simulator.png) |
 
 ---
 
@@ -30,7 +30,6 @@ This isn't just a dashboard. It's a **complete data platform** that:
 - Orchestrates daily runs with **Apache Airflow**
 - Delivers **4 interactive Power BI pages** with profit modeling, what-if simulation, and customer retention analysis
 
-> 💡 **My instructor loves Databricks. So I built the entire pipeline there – from raw ingestion to star schema.**
 
 ---
 
