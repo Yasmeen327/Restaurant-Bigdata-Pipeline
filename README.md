@@ -37,7 +37,7 @@ This isn't just a dashboard. It's a complete data platform that:
 
 ---
 
-# 🧱 Complete Architecture
+## 🧱 Complete Architecture
 
 ```mermaid
 flowchart TD
@@ -51,8 +51,10 @@ flowchart TD
     DAG[Airflow DAG - Daily 2 AM] -.-> BRONZE
     DAG -.-> SILVER
     DAG -.-> GOLD
-
+```
     DASH[Power BI Dashboard - 4 Pages]
+
+
 🧊 Databricks – The Core Processing Layer
 Notebooks Overview
 01_bronze_layer.ipynb
