@@ -51,9 +51,8 @@ flowchart TD
     DAG[Airflow DAG - Daily 2 AM] -.-> BRONZE
     DAG -.-> SILVER
     DAG -.-> GOLD
-```
     DASH[Power BI Dashboard - 4 Pages]
-
+```
 
 🧊 Databricks – The Core Processing Layer
 Notebooks Overview
