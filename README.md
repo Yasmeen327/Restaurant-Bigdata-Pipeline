@@ -1,50 +1,201 @@
-# 🍽️ Egyptian Restaurant Big Data Pipeline
+🍽️ Egyptian Restaurant Data Platform
+End-to-End Medallion Architecture on Databricks (11.1M+ Records | 2020–2025)
 
-> End‑to‑end data pipeline processing 11M+ records from a 6‑branch Egyptian restaurant chain (2020–2025). Built with **Medallion Architecture** on Databricks, orchestrated with **Apache Airflow**, and visualized in **Power BI**.
+Production-grade analytics system simulating a multi-branch restaurant chain in Egypt.
+Built using Databricks (Spark + Delta Lake), orchestrated via Apache Airflow, and modeled for Power BI-driven business intelligence.
 
----
+📌 Executive Summary
 
-## 📊 Pipeline Overview (Mermaid)
+This project implements a scalable end-to-end data platform processing 11.1M+ transactional records across 6 restaurant branches in Egypt, transforming raw operational data into a structured analytics warehouse.
 
-```mermaid
-flowchart TD
-    A[Raw Data Sources<br>7 CSV + 2 JSON] --> B[Ingestion<br>Fivetran / Databricks]
-    B --> C[🔵 Bronze Layer<br>Unified Delta Table<br>11,110,000 rows]
-    C --> D[🟡 Silver Layer<br>Cleaning & Enrichment<br>Dedupe, price filter, profit modeling]
-    D --> E[🟢 Gold Layer<br>Star Schema<br>Fact + 6 Dimensions]
-    E --> F[📊 Power BI Dashboard<br>4 interactive pages]
-    
-    G[Apache Airflow DAG] -.-> B
-    G -.-> C
-    G -.-> D
-    G -.-> E
-🧱 Medallion Architecture (Bronze → Silver → Gold)
-🔵 Bronze Layer
-Union of all 9 source files using unionByName
+It enables executive reporting, profitability tracking, customer behavior analysis, and scenario-based decision modeling.
 
-Stored as Delta Lake table: bronze_restaurant
+Key outcomes
+11.1M raw records → 2.49M analytics-ready records
+444M EGP modeled profit
+65.34% average profit margin
+Fully automated daily pipeline via Airflow
+Star schema optimized for BI workloads
+Power BI semantic model with interactive simulation layer
+🧱 System Architecture
+High-Level Data Flow
+🧱 Medallion Architecture
+🔵 Bronze Layer — Raw Ingestion
 
-11,110,000 rows (raw, unverified)
+This layer preserves raw source fidelity for traceability and reprocessing.
 
-🟡 Silver Layer
-Removed 2,000,000 duplicate order_id records
+9 heterogeneous data sources (CSV + JSON)
+Unified using unionByName
+Stored in Delta Lake format
+No transformations applied
 
-Removed 51,442 rows with zero/negative price
+Output:
 
-Feature engineering: time_of_day, year, quarter, is_weekend
+bronze_restaurant
+11,110,000 records
+🟡 Silver Layer — Data Cleaning & Feature Engineering
 
-Profit modeling (3 cost drivers – see below)
+This layer ensures data quality and introduces analytical readiness.
 
-Clean rows after joins: 2,497,678
+Data Cleaning
+Removed ~2M duplicate order_id records
+Filtered 51,442 invalid price records
+Standardized schema across all sources
+Feature Engineering
+time_of_day segmentation
+year / quarter extraction
+weekend flag
+profit estimation model
 
-🟢 Gold Layer (Star Schema)
-Fact table: gold_fact_orders (2,497,678 rows)
+Output:
 
-Dimension tables: date, branch, category, payment, time, customer
+2,497,678 clean records
+🟢 Gold Layer — Analytics Warehouse (Star Schema)
 
-Optimised for Power BI analytic queries
+This layer is optimized for BI performance and reporting.
 
-⭐ Star Schema Diagram (Mermaid)
+Fact Table
+gold_fact_orders (2.49M records)
+Dimension Tables
+date
+branch
+category
+customer
+payment
+time
+Design Principles
+Fully denormalized for analytics performance
+BI-optimized joins
+Partition-friendly structure for scalability
+⚙️ Orchestration Layer (Apache Airflow)
+DAG: restaurant_medallion_pipeline
+
+The pipeline runs as a production-style scheduled workflow.
+
+Execution Flow
+
+start → ingest_bronze → clean_silver → build_gold → data_quality → notify_success → end
+
+Configuration
+Schedule: daily (02:00 AM)
+Retries: 3 (5-minute delay)
+Timeout: 60 minutes
+Slack notifications for success/failure
+Reliability Design
+Idempotent pipeline execution
+Safe re-runs without duplication
+Data validation before publishing Gold layer
+💰 Profit Modeling Layer
+
+Since real cost data was unavailable, a deterministic financial model was implemented using industry benchmarks for quick-service restaurants.
+
+Assumptions
+Food cost: 30% of revenue
+Delivery cost: 15 EGP per order
+Card processing fee: 1.5% per transaction
+Result
+Average profit margin: 65.34%
+Fully reproducible logic embedded in Silver layer transformations
+📊 Business Intelligence Layer (Power BI)
+
+The BI layer is designed as a multi-page analytical system supporting executive and operational decision-making.
+
+Executive Overview
+Revenue & profit KPIs
+Sales trends (2020–2025)
+Top product categories
+Payment method distribution
+Data quality monitoring
+Profitability Analysis
+Branch-level performance comparison
+Margin segmentation (high / medium / low)
+Operational insights:
+underperforming branch detection
+category-level optimization opportunities
+Customer Analytics
+Customer Lifetime Value (CLV)
+Churn rate: 12.6%
+Segmentation: new / regular / loyal customers
+Retention analysis by branch
+Scenario Simulation Engine
+
+What-if analysis system built using parameterized models:
+
+Delivery mix changes
+Discount strategy impact
+Price adjustments
+Digital payment adoption
+Business impact simulation
++49M EGP revenue potential
++31.9M EGP profit uplift
+Margin improvement: 65.3% → 66.0%
+🧪 Data Quality Framework
+Stage	Records
+Raw ingestion	11,110,000
+After deduplication	9,110,000
+After cleaning	2,497,678
+Gold layer	2,497,678
+Controls implemented
+Duplicate transaction detection
+Null handling strategy
+Schema enforcement across layers
+Referential integrity validation in Gold layer
+🛠️ Technology Stack
+Layer	Technology
+Storage	Delta Lake
+Processing	Apache Spark (PySpark)
+Orchestration	Apache Airflow
+Visualization	Power BI
+Version Control	GitHub
+Languages	Python, SQL, DAX
+📁 Repository Structure
+Egyptian-Restaurant-Platform/
+│
+├── notebooks/
+│   ├── 01_bronze_layer.ipynb
+│   ├── 02_silver_layer.ipynb
+│   └── 03_gold_layer.ipynb
+│
+├── airflow/
+│   └── restaurant_medallion_dag.py
+│
+├── powerbi/
+│   └── restaurant_dashboard.pbix
+│
+├── docs/
+│   └── architecture.png
+│
+├── README.md
+└── requirements.txt
+🚀 Reproducibility
+Databricks
+Execute Bronze → Silver → Gold notebooks sequentially
+Export Gold tables for BI consumption
+Airflow
+Deploy DAG in Airflow scheduler
+Enable monitoring and alerts
+Power BI
+Connect to Gold layer tables
+Define relationships
+Publish semantic model
+🧠 Engineering Highlights
+End-to-end Medallion architecture implementation
+Large-scale Spark processing (11M+ records)
+Production-style Airflow orchestration
+Star schema optimized for BI performance
+Data quality gating before publishing
+Scenario-based financial simulation layer
+👤 Author
+
+Yasmeen Elshamy
+ITI – Power BI Development Track
+Focus: Data Engineering, Analytics Systems, BI Architecture
+
+GitHub: @Yasmeen327
+
+📜 License
+
+MIT License — for educational and professional use with attribution.
 
 
 
