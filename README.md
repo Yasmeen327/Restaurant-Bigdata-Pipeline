@@ -64,7 +64,7 @@ This isn't just a dashboard. It's a **complete data platform** that:
 - Operations: Create star schema (1 fact table + 6 dimension tables), enforce relationships, validate referential integrity
 - Output: `gold_fact_orders` + `dim_date`, `dim_branch`, `dim_category`, `dim_customer`, `dim_payment`, `dim_time`
 
-### Beautiful Databricks SQL Examples
+### Databricks SQL Examples
 
 ```sql
 -- Bronze: Unified ingestion
