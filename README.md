@@ -2,7 +2,7 @@
 ## End-to-End Medallion Architecture on Databricks (11.1M+ Records | 2020–2025)
 
 > A production-grade analytics system simulating a multi-branch restaurant chain in Egypt.  
-> Built entirely on Databricks (Spark + Delta Lake), orchestrated with Apache Airflow, and delivered through Power BI.
+> Built entirely on **Databricks** (Spark + Delta Lake), orchestrated with **Apache Airflow**, and delivered through **Power BI**.
 
 This is my Big Data project for the ITI Power BI Development Track – built to demonstrate enterprise-ready data engineering skills.
 
@@ -12,10 +12,10 @@ This is my Big Data project for the ITI Power BI Development Track – built to 
 
 | Page | Preview |
 |------|---------|
-| Executive Overview | ![overview](assets/overview.png) |
-| Profit Analysis | ![profit-analysis](assets/profit-analysis.png) |
-| Customer Insights | ![customer-insights](assets/customer-insights.png) |
-| What-If Simulator | ![what-if-simulator](assets/what-if-simulator.png) |
+| Executive Overview | `assets/overview.png` |
+| Profit Analysis | `assets/profit-analysis.png` |
+| Customer Insights | `assets/customer-insights.png` |
+| What-If Simulator | `assets/what-if-simulator.png` |
 
 ---
 
@@ -24,7 +24,7 @@ This is my Big Data project for the ITI Power BI Development Track – built to 
 This isn't just a dashboard. It's a complete data platform that:
 
 - Processes 11.1 million raw records from 9 disparate files (7 CSV + 2 JSON)
-- Runs a Medallion Architecture (Bronze to Silver to Gold) entirely on Databricks
+- Runs a Medallion Architecture (Bronze → Silver → Gold) entirely on Databricks
 - Uses PySpark for distributed data transformation
 - Stores everything in Delta Lake for ACID compliance and time travel
 - Orchestrates daily runs with Apache Airflow
@@ -49,17 +49,17 @@ This isn't just a dashboard. It's a complete data platform that:
 **01_bronze_layer.ipynb**
 - Input: 7 CSV + 2 JSON files
 - Operations: unionByName, schema unification, Delta write
-- Output: bronze_restaurant (11,110,000 rows)
+- Output: `bronze_restaurant` (11,110,000 rows)
 
 **02_silver_layer.ipynb**
-- Input: bronze_restaurant
-- Operations: Deduplication (2M rows removed), price filter (51K rows removed), profit modeling (3 cost drivers), feature engineering (time_of_day, is_weekend, year, quarter)
-- Output: silver_restaurant (2,497,678 rows)
+- Input: `bronze_restaurant`
+- Operations: Deduplication (2M rows removed), price filter (51K rows removed), profit modeling (3 cost drivers), feature engineering (`time_of_day`, `is_weekend`, `year`, `quarter`)
+- Output: `silver_restaurant` (2,497,678 rows)
 
 **03_gold_layer.ipynb**
-- Input: silver_restaurant
+- Input: `silver_restaurant`
 - Operations: Create star schema (1 fact table + 6 dimension tables), enforce relationships
-- Output: gold_fact_orders + 6 dimension tables
+- Output: `gold_fact_orders` + 6 dimension tables
 
 ### Databricks SQL Examples
 
@@ -87,7 +87,11 @@ SELECT *,
     CASE WHEN order_type = 'Delivery' THEN 15 ELSE 0 END - 
     CASE WHEN payment_method = 'Card' THEN total_amount * 0.015 ELSE 0 END AS profit
 FROM silver_restaurant;
+
+
 Complete Architecture
+Below is the end-to-end data flow from raw sources to the final Power BI dashboard, including orchestration via Apache Airflow.
+
 flowchart TD
     CSV[7 CSV Files]
     JSON[2 JSON Files]
@@ -116,15 +120,15 @@ Workflow Tasks (in order):
 
 start_task
 
-ingest_bronze (load 9 files to Delta table)
+ingest_bronze – load 9 files to Delta table
 
-clean_silver (dedupe, filter, profit calc)
+clean_silver – dedupe, filter, profit calc
 
-build_gold (star schema: fact + dims)
+build_gold – star schema (fact + dims)
 
-data_quality (validate row counts and nulls)
+data_quality – validate row counts and nulls
 
-notify_success (Slack webhook alert)
+notify_success – Slack webhook alert
 
 end_task
 
@@ -133,6 +137,14 @@ Schedule	0 2 * * * (daily 2 AM)
 Retries	3 attempts with 5-minute delay
 Timeout	60 minutes
 Alerting	Slack webhook (success/failure)
+
+
+
+
+
+
+
+
 Profit Modeling (Silver Layer)
 Since actual cost data wasn't available, I built a deterministic financial model directly in PySpark:
 
@@ -168,7 +180,7 @@ Tanta	65M	44M	66%	Average
 Assiut	33M	22M	64%	At Risk
 Actionable Insights:
 
-Assiut margin is 64 percent, 6 points below Cairo. High delivery mix at 42 percent is eroding profit.
+Assiut margin is 64 percent, 6 points below Cairo. High delivery mix at 42 percent is eroding profit. Push weekend dine-in promotions.
 
 Grills deliver 68 percent margin. Increasing menu share by 5 percent could add about 7M EGP to annual profit.
 
@@ -316,11 +328,11 @@ Date Range	2020 to 2025
 Branches	6
 Author
 Yasmeen El Shamy
-ITI Power BI Development Track
 GitHub: Yasmeen327
 
 License
-MIT License
+MIT License – free for educational and professional use with attribution.
+
 
 
 
