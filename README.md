@@ -26,11 +26,18 @@ flowchart TD
     F -.-> D
 ```
 
+---
 Data Flow:
 
-· Bronze: unionByName across 9 files → 11,110,000 rows
-· Silver: Removed 2M duplicates, 51K bad prices → 2,497,678 clean rows
-· Gold: Star schema (fact_orders + dim_date, branch, category, payment, customer, time)
+Layer	Operation	Row Count
+Bronze	unionByName across 9 files	11,110,000
+Silver	Removed 2M duplicates + 51K bad prices	2,497,678
+Gold	Star schema (fact + 6 dimensions)	2,497,678
+text
+
+---
+
+
 
 ---
 
