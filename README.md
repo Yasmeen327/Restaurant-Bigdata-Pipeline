@@ -24,6 +24,7 @@ flowchart TD
     F -.-> C
     F -.-> D
 ```
+---
 
 **Layer Details**
 
