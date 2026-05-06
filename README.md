@@ -114,6 +114,7 @@ Data validation before Gold publishing
 
 
 
+
 💰 Profit Modeling Layer
 Since real cost data was unavailable, a deterministic financial model was applied.
 Assumptions
