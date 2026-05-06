@@ -15,7 +15,7 @@
 | Executive Overview | ![overview](assets/overview.png) |
 | Profit Analysis | ![Profit-Analysis](assets/profit-analysis.png) |
 | Customer Insights | ![Customer-Insights](assets/customer-insights.png) |
-| What-If Simulator | ![What-If-Simulator](assets/what-if-simulator.png) |
+
 
 ---
 
