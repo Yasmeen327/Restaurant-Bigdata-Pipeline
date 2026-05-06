@@ -23,12 +23,15 @@ flowchart TD
     F[Airflow DAG] -.-> B
     F -.-> C
     F -.-> D
-Layer Details:
+```
 
-Layer	Operation	Rows
-Bronze	unionByName across 9 files	11,110,000
-Silver	Deduplication (2M), price filter (51K), feature engineering	2,497,678
-Gold	Star schema: fact_orders + 6 dimensions	2,497,678
+**Layer Details**
+
+| Layer  | Operation | Rows |
+|--------|----------|------|
+| Bronze | unionByName across 9 files | 11,110,000 |
+| Silver | Deduplication (2M), price filter (51K), feature engineering | 2,497,678 |
+| Gold   | Star schema: fact_orders + 6 dimensions | 2,497,678 |
 
 📊 Data Quality Results
 
