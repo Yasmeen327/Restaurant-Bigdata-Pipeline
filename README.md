@@ -1,31 +1,30 @@
 # 🍽️ Egyptian Restaurant Data Platform  
 ## End-to-End Medallion Architecture on Databricks (11.1M+ Records | 2020–2025)
 
-
 > Production-grade analytics system simulating a multi-branch restaurant chain in Egypt.  
 Built using Databricks (Spark + Delta Lake), orchestrated via Apache Airflow, and modeled for Power BI-driven business intelligence.
 
 ---
 
-# 📌 Executive Summary
+## 📌 Executive Summary
 
-This project implements a scalable end-to-end data platform processing 11.1M+ transactional records across 6 restaurant branches in Egypt, transforming raw operational data into a structured analytics warehouse.
+This project implements a scalable end-to-end data platform processing **11.1M+ transactional records** across 6 restaurant branches in Egypt, transforming raw operational data into a structured analytics warehouse.
 
 It supports executive reporting, profitability tracking, customer segmentation, and scenario-based decision modeling.
 
-### Key outcomes
-- 11.1M raw records → 2.49M analytics-ready records  
-- 444M EGP modeled profit  
-- 65.34% average profit margin  
-- Fully automated daily pipeline via Airflow  
-- Star schema optimized for BI workloads  
-- Power BI semantic model with simulation layer  
+### Key Outcomes
+- 11.1M raw records → **2.49M analytics-ready records**
+- **444M EGP** modeled profit
+- **65.34%** average profit margin
+- Fully automated daily pipeline via **Airflow**
+- Star schema optimized for BI workloads
+- Power BI semantic model with **simulation layer**
 
 ---
 
-# 🧱 System Architecture
+## 🧱 System Architecture
 
-## High-Level Data Flow
+### High-Level Data Flow
 
 ```mermaid
 flowchart TD
@@ -38,276 +37,6 @@ flowchart TD
     G[Airflow Orchestration] --> C
     G --> D
     G --> E
-```
-
-🧱 Medallion Architecture
-🔵 Bronze Layer — Raw Ingestion
-9 heterogeneous data sources (CSV + JSON)
-Unified using unionByName
-Stored in Delta Lake format
-No transformations applied
-
-Output:
-
-bronze_restaurant
-11,110,000 raw records
-🟡 Silver Layer — Data Cleaning & Feature Engineering
-Data Cleaning
-Removed ~2M duplicate order_id records
-Filtered 51,442 invalid price records
-Schema standardization across all sources
-Feature Engineering
-time_of_day segmentation
-year / quarter extraction
-weekend flag
-profit estimation model
-
-Output:
-
-2,497,678 clean records
-🟢 Gold Layer — Analytics Warehouse (Star Schema)
-Fact Table
-gold_fact_orders (2.49M records)
-Dimension Tables
-date
-branch
-category
-customer
-payment
-time
-
-Design Principles
-Denormalized for BI performance
-Optimized join paths
-Partition-friendly structure
-
-
-⚙️ Orchestration Layer (Apache Airflow)
-DAG: restaurant_medallion_pipeline
-Workflow
-start → ingest_bronze → clean_silver → build_gold → data_quality → notify_success → end
-Configuration
-
-
-Schedule: daily (02:00 AM)
-
-
-Retries: 3 (5-minute delay)
-
-
-Timeout: 60 minutes
-
-
-Slack alerts for success/failure
-
-
-Reliability Design
-
-
-Idempotent execution
-
-
-Safe re-runs without duplication
-
-
-Data validation before Gold publishing
-
-
-
-
-💰 Profit Modeling Layer
-Since real cost data was unavailable, a deterministic financial model was applied.
-Assumptions
-
-
-Food cost: 30% of revenue
-
-
-Delivery cost: 15 EGP per order
-
-
-Card processing fee: 1.5% per transaction
-
-
-Output
-
-
-Average profit margin: 65.34%
-
-
-Fully reproducible model embedded in Silver layer
-
-
-
-📊 Business Intelligence Layer (Power BI)
-Executive Overview
-
-
-Revenue & profit KPIs
-
-
-Sales trends (2020–2025)
-
-
-Top product categories
-
-
-Payment distribution
-
-
-Data quality monitoring
-
-
-Profitability Analysis
-
-
-Branch performance comparison
-
-
-Margin segmentation (high / medium / low)
-
-
-Operational insights:
-
-
-Underperforming branch detection
-
-
-Category optimization opportunities
-
-
-
-
-Customer Analytics
-
-
-Customer Lifetime Value (CLV)
-
-
-Churn rate: 12.6%
-
-
-Segmentation: new / regular / loyal customers
-
-
-Retention analysis by branch
-
-
-Scenario Simulation Engine
-What-if analysis system:
-
-
-Delivery mix changes
-
-
-Discount strategy impact
-
-
-Pricing adjustments
-
-
-Digital adoption scenarios
-
-
-Business Impact
-
-
-+49M EGP revenue potential
-
-
-+31.9M EGP profit uplift
-
-
-Margin: 65.3% → 66.0%
-
-
-
-🧪 Data Quality Framework
-StageRecordsRaw ingestion11,110,000After deduplication9,110,000After cleaning2,497,678Gold layer2,497,678
-Controls
-
-
-Duplicate transaction detection
-
-
-Null handling strategy
-
-
-Schema enforcement across layers
-
-
-Referential integrity validation in Gold layer
-
-
-
-🛠️ Technology Stack
-LayerTechnologyStorageDelta LakeProcessingApache Spark (PySpark)OrchestrationApache AirflowVisualizationPower BIVersion ControlGitHubLanguagesPython, SQL, DAX
-
-📁 Repository Structure
-Egyptian-Restaurant-Platform/│├── notebooks/│   ├── 01_bronze_layer.ipynb│   ├── 02_silver_layer.ipynb│   └── 03_gold_layer.ipynb│├── airflow/│   └── restaurant_medallion_dag.py│├── powerbi/│   └── restaurant_dashboard.pbix│├── docs/│   └── architecture.png│├── README.md└── requirements.txt
-
-🚀 Reproducibility
-Databricks
-
-
-Run Bronze → Silver → Gold notebooks sequentially
-
-
-Export Gold tables for BI layer
-
-
-Airflow
-
-
-Deploy DAG in scheduler
-
-
-Enable monitoring and alerts
-
-
-Power BI
-
-
-Connect to Gold layer
-
-
-Define relationships
-
-
-Publish semantic model
-
-
-
-🧠 Engineering Highlights
-
-
-End-to-end Medallion architecture implementation
-
-
-Large-scale Spark processing (11M+ records)
-
-
-Production-style Airflow orchestration
-
-
-Star schema optimized for BI workloads
-
-
-Data quality gates before publishing
-
-
-Scenario-based financial simulation layer
-
-
-
-👤 Author
-Yasmeen Elshamy
-ITI – Power BI Development Track
-Focus: Data Engineering, Analytics Systems, BI Architecture
-GitHub: @Yasmeen327
-
-📜 License
-MIT License — for educational and professional use with attribution.
 
 
 
