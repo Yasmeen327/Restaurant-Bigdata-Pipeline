@@ -12,7 +12,33 @@ This project demonstrates real-world data engineering skills including large-sca
 
 ## 🏗 Architecture
 
-![Architecture](architecture.png)
+RAW DATA (7 CSV + 2 JSON)
+│
+▼
+┌─────────────┐
+│ Bronze Layer │ → 11,110,000 rows
+│ (Delta) │ unionByName across 9 files
+└──────┬──────┘
+│
+▼
+┌─────────────┐
+│ Silver Layer │ → 2,497,678 rows
+│ (Delta) │ Deduped, cleaned, profit modeled
+└──────┬──────┘
+│
+▼
+┌─────────────┐
+│ Gold Layer │ → Star schema
+│ (Star Schema)│ Fact + 6 dimensions
+└──────┬──────┘
+│
+▼
+┌─────────────┐
+│ Power BI │ → 4 interactive pages
+│ Dashboard │
+└─────────────┘
+
+⬌ Airflow DAG orchestrates daily ⬌
 
 **Layer Details**
 
