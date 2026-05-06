@@ -75,24 +75,21 @@ UNION ALL
 SELECT * FROM json.`/path/orders`;
 
 -- Silver: Deduplication with window function
-DELETE FROM silver_restaurant
-WHERE order_id IN (
-    SELECT order_id FROM (
-        SELECT order_id, ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY order_date) as rn
-        FROM bronze_restaurant
-    ) WHERE rn > 1
-);
+CREATE OR REPLACE TABLE silver_restaurant AS
+SELECT * FROM (
+    SELECT *,
+        ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY order_date) as rn
+    FROM bronze_restaurant
+) WHERE rn = 1;
 
--- Silver: Profit modeling (generated column)
-ALTER TABLE silver_restaurant ADD COLUMNS (
-    profit DECIMAL(12,2) GENERATED ALWAYS AS (
-        total_amount - 
-        (total_amount * 0.30) - 
-        (CASE WHEN order_type = 'Delivery' THEN 15 ELSE 0 END) - 
-        (CASE WHEN payment_method = 'Card' THEN total_amount * 0.015 ELSE 0 END)
-    )
-);
-
+-- Silver: Add profit column (calculated during query)
+CREATE OR REPLACE TABLE silver_restaurant_with_profit AS
+SELECT *,
+    total_amount - 
+    (total_amount * 0.30) - 
+    CASE WHEN order_type = 'Delivery' THEN 15 ELSE 0 END - 
+    CASE WHEN payment_method = 'Card' THEN total_amount * 0.015 ELSE 0 END AS profit
+FROM silver_restaurant;
 
 ## 📐 Complete Architecture
 
