@@ -10,8 +10,6 @@ A production-grade **Big Data pipeline** that ingests, cleans, transforms, and s
 
 This project demonstrates real-world data engineering skills including large-scale data processing, pipeline orchestration, data quality management, star schema modeling, and business intelligence delivery.
 
----
-
 ## 🏗 Architecture
 
 ```mermaid
@@ -23,8 +21,6 @@ flowchart TD
     F[Airflow DAG] -.-> B
     F -.-> C
     F -.-> D
-```
----
 
 **Layer Details**
 
